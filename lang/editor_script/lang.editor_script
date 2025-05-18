@@ -15,18 +15,34 @@ end
 
 
 ---Collect all characters used in key-value json string values
-local function acquire_user_characters(json_path)
-	local json_content = editor.get(json_path, "text")
-	local json_data = json.decode(json_content)
+local function acquire_user_characters(path)
+	local is_json = ends_with(path, ".json")
+	local is_csv = ends_with(path, ".csv")
 
 	local symbols = {}
-	for key, value in pairs(json_data) do
-		if type(value) == "string" then
-			for i = 1, #value do
-				local char = utf8.sub(value, i, i)
-				if not symbols[char] and not IGNORE_CHARACTERS[char] then
-					symbols[char] = true
+
+	if is_json then
+		local json_content = editor.get(path, "text")
+		local json_data = json.decode(json_content)
+
+		for key, value in pairs(json_data) do
+			if type(value) == "string" then
+				for i = 1, #value do
+					local char = utf8.sub(value, i, i)
+					if not symbols[char] and not IGNORE_CHARACTERS[char] then
+						symbols[char] = true
+					end
 				end
+			end
+		end
+	end
+
+	if is_csv then
+		local csv_content = editor.get(path, "text")
+		for index = 1, #csv_content do
+			local char = utf8.sub(csv_content, index, index)
+			if not symbols[char] and not IGNORE_CHARACTERS[char] then
+				symbols[char] = true
 			end
 		end
 	end
@@ -38,13 +54,13 @@ end
 function M.get_commands()
 	return {
 		{
-			label = "Acquire unique characters",
+			label = "[Lang] Acquire unique characters",
 			locations = { "Assets" },
 			query = { selection = { type = "resource", cardinality = "many" } },
 			active = function(opts)
 				for index = 1, #opts.selection do
 					local path = editor.get(opts.selection[index], "path")
-					if not ends_with(path, ".json") then
+					if not ends_with(path, ".json") and not ends_with(path, ".csv") then
 						return false
 					end
 				end
