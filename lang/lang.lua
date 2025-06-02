@@ -17,10 +17,6 @@ local lang_debug_page = require("lang.lang_debug_page")
 local M = {}
 
 
----Is lang module inited
----@type boolean
-local INITED = false
-
 ---Current language translations
 ---@type table<string, string> Contains all current language translations. Key - lang id, Value - translation
 local LANG_DICT = nil
@@ -34,25 +30,28 @@ function M.reset_state()
 	M.state = {
 		lang = lang_internal.DEFAULT_LANG
 	}
-	INITED = false
 	LANG_DICT = {}
 end
 M.reset_state()
 
 
+---@alias lang_data { path: string|table, id: string }
+
 ---List of available languages
----@type { path: string, id: string }[] In order
+---@type lang_data[] In order
 M.available_langs = {}
 
 ---Initialize lang module
----@param available_langs { path: string, id: string }[] List of available languages
----@param force_lang string? Force language code
-function M.init(available_langs, force_lang)
+---@param available_langs lang_data[] List of available languages
+---@param lang_on_start string? Language code to set on start, override saved language
+function M.init(available_langs, lang_on_start)
+	local default_lang = nil
 	for index, lang_data in ipairs(available_langs) do
 		table.insert(M.available_langs, lang_data)
+		default_lang = default_lang or lang_data.id
 	end
 
-	M.set_lang(force_lang or M.state.lang)
+	M.set_lang(lang_on_start or M.state.lang or default_lang)
 end
 
 
@@ -64,24 +63,27 @@ end
 
 
 ---Set current language
----@param lang_id string? current language code (en, jp, ru, etc.)
+---@param lang_id string current language code (en, jp, ru, etc.)
 ---@return boolean is language changed
 function M.set_lang(lang_id)
-	lang_internal.logger:info("Set lang", lang_id)
-
 	local previous_lang = M.state.lang
-	local previous_loaded_lang = INITED and previous_lang or nil
+	local previous_loaded_lang = previous_lang or nil
 
-	-- check csv or json and load
+	-- Find language data
 	local lang_data = lang_internal.find(M.available_langs, "id", lang_id)
 	if not lang_data then
 		lang_internal.logger:error("Lang not found", lang_id)
 		return false
 	end
 
-	local is_csv = string.find(lang_data.path, ".csv")
-	local is_json = string.find(lang_data.path, ".json")
-	if is_csv then
+	local is_lua = type(lang_data.path) == "table"
+	local is_csv = not is_lua and string.find(lang_data.path, ".csv")
+	local is_json = not is_lua and string.find(lang_data.path, ".json")
+
+	if is_lua then
+		M.set_lang_table(lang_data.path)
+		M.state.lang = lang_id
+	elseif is_csv then
 		M.load_from_csv(lang_data.path, lang_id)
 	elseif is_json then
 		M.load_from_json(lang_data.path, lang_id)
@@ -148,7 +150,6 @@ end
 
 function M.set_lang_table(lang_table)
 	LANG_DICT = lang_table
-	INITED = true
 end
 
 
