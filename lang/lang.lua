@@ -17,6 +17,10 @@ local lang_debug_page = require("lang.lang_debug_page")
 local M = {}
 
 
+---@class lang.data
+---@field path string|table Lua table, json or csv path, ex: "/resources/lang/en.json", "/resources/lang/en.csv"
+---@field id string Language code, ex: "en". If csv file, it's a header name
+
 ---Current language translations
 ---@type table<string, string> Contains all current language translations. Key - lang id, Value - translation
 local LANG_DICT = nil
@@ -25,33 +29,50 @@ local LANG_DICT = nil
 ---@type lang.state
 M.state = nil
 
+---List of available languages
+---@type lang.data[] In order
+M.available_langs = nil
+
 ---Reset module lang state
 function M.reset_state()
 	M.state = {
-		lang = lang_internal.DEFAULT_LANG
+		lang = lang_internal.DEFAULT_LANG,
 	}
+	M.available_langs = {}
 	LANG_DICT = {}
 end
 M.reset_state()
 
 
----@alias lang_data { path: string|table, id: string }
-
----List of available languages
----@type lang_data[] In order
-M.available_langs = {}
-
 ---Initialize lang module
----@param available_langs lang_data[] List of available languages
+---@param available_langs lang.data[] List of available languages
 ---@param lang_on_start string? Language code to set on start, override saved language
 function M.init(available_langs, lang_on_start)
-	local default_lang = nil
+	local default_lang = available_langs and available_langs[1].id
+
 	for index, lang_data in ipairs(available_langs) do
 		table.insert(M.available_langs, lang_data)
 		default_lang = default_lang or lang_data.id
 	end
 
-	M.set_lang(lang_on_start or M.state.lang or default_lang)
+	-- Get system language if no specific language is requested
+	local system_lang = nil
+	if not lang_on_start and not M.state.lang then
+		local sys_info = sys.get_sys_info()
+		lang_internal.logger:info("System language", sys_info.language)
+
+		if sys_info and sys_info.language then
+			-- Check if system language exists in available languages
+			for _, lang_data in ipairs(M.available_langs) do
+				if lang_data.id == sys_info.language then
+					system_lang = sys_info.language
+					break
+				end
+			end
+		end
+	end
+
+	M.set_lang(lang_on_start or M.state.lang or system_lang or default_lang)
 end
 
 
@@ -245,8 +266,8 @@ function M.get_lang_table()
 end
 
 
----@param druid druid.instance
----@param properties_panel druid.widget.properties_panel
+---@param druid table druid instance
+---@param properties_panel table druid properties panel instance
 function M.render_properties_panel(druid, properties_panel)
 	lang_debug_page.render_properties_panel(M, druid, properties_panel)
 end

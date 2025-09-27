@@ -8,8 +8,9 @@ return function()
 		end)
 
 		it("Should not change language if not found", function()
-			lang.state.lang = "fr"
-			lang.init()
+			lang.init({
+				{ id = "en", path = "/resources/lang/en.json" },
+			}, "fr")
 
 			local text = lang.txt("ui_hello")
 			assert_equal(text, "Hello, World!")

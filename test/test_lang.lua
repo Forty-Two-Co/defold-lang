@@ -4,8 +4,15 @@ return function()
 	describe("Defold Lang", function()
 		before(function()
 			lang = require("lang.lang")
-			lang.init()
-			lang.set_lang(lang.get_default_lang())
+			lang.init({
+				{ id = "en", path = "/resources/lang/en.json" },
+				{ id = "ru", path = "/resources/lang/ru.json" },
+				{ id = "es", path = "/resources/lang/es.json" },
+			}, "en")
+		end)
+
+		after(function()
+			lang.reset_state()
 		end)
 
 		it("Should lang.txt return text", function()
@@ -53,6 +60,7 @@ return function()
 
 		it("Should lang.get_langs return all languages", function()
 			local langs = lang.get_langs()
+			pprint(langs)
 			assert(#langs == 3)
 			assert(langs[1] == "en")
 			assert(langs[2] == "ru")

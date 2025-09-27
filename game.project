@@ -22,8 +22,3 @@ dependencies#0 = https://github.com/britzl/deftest/archive/master.zip
 [library]
 include_dirs = lang
 
-[lang]
-path = /resources/lang
-langs = en,ru,es
-default = en
-
