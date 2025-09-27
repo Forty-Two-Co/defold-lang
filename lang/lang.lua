@@ -74,6 +74,11 @@ function M.init(available_langs, lang_on_start)
 		return
 	end
 
+	-- Clear previous language data
+	LANGS_ORDER = {}
+	AVAILABLE_LANGS_MAP = {}
+	LANG_DICT = {}
+
 	local default_lang = available_langs[1].id
 
 	-- Build available languages list and map

@@ -1,0 +1,8 @@
+key,en,ru,es
+ui_hello,"Hello, World!","Привет, Мир!","¡Hola, Mundo!"
+ui_goodbye,"Goodbye, World!","До свидания, Мир!","¡Adiós, Mundo!"
+ui_welcome,"Welcome to the world!","Добро пожаловать в мир!","¡Bienvenido al mundo!"
+ui_what,"What is your name?","Как тебя зовут?","¿Cómo te llamas?"
+ui_params,"Hello, %s","Привет, %s","Hola, %s"
+ui_random,"String 1\nString 2\nString 3","Строка 1\nСтрока 2\nСтрока 3","Cadena 1\nCadena 2\nCadena 3"
+

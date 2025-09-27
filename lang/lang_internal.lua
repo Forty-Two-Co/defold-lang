@@ -96,7 +96,9 @@ function M.load_csv(csv_path)
 				-- Add translations for each language
 				for i = 2, #headers do
 					if fields[i] then
-						data[headers[i]][key] = fields[i]
+						-- Process escape sequences in the field value
+						local value = fields[i]:gsub("\\n", "\n"):gsub("\\t", "\t"):gsub("\\r", "\r")
+						data[headers[i]][key] = value
 					end
 				end
 			end
