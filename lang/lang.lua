@@ -29,9 +29,9 @@ local LANG_DICT = nil
 ---@type lang.state
 M.state = nil
 
----List of available languages
+---Order of available languages
 ---@type lang.data[] In order
-M.available_langs = nil
+local LANGS_ORDER = nil
 
 ---Map of available languages for fast lookup
 ---@type table<string, lang.data> Key is language id, value is lang.data
@@ -42,9 +42,9 @@ function M.reset_state()
 	M.state = {
 		lang = lang_internal.DEFAULT_LANG,
 	}
-	M.available_langs = {}
-	AVAILABLE_LANGS_MAP = {}
 	LANG_DICT = {}
+	LANGS_ORDER = {}
+	AVAILABLE_LANGS_MAP = {}
 end
 M.reset_state()
 
@@ -65,8 +65,8 @@ local function get_lang_data(lang_id)
 end
 
 
----Initialize lang module
----@param available_langs lang.data[] List of available languages
+---Call this to initialize lang module
+---@param available_langs lang.data[] List of { id = "en", path = "/locales/en.json" }
 ---@param lang_on_start string? Language code to set on start, override saved language
 function M.init(available_langs, lang_on_start)
 	if not available_langs or #available_langs == 0 then
@@ -78,7 +78,7 @@ function M.init(available_langs, lang_on_start)
 
 	-- Build available languages list and map
 	for index, lang_data in ipairs(available_langs) do
-		table.insert(M.available_langs, lang_data)
+		table.insert(LANGS_ORDER, lang_data)
 		AVAILABLE_LANGS_MAP[lang_data.id] = lang_data
 		default_lang = default_lang or lang_data.id
 	end
@@ -265,7 +265,7 @@ end
 
 ---Get translation for text id
 ---@param text_id string text id from your localization
----@return string Translated text
+---@return string text ("ui_hello_world") -> "Hello, World!"
 function M.txt(text_id)
 	return LANG_DICT[text_id] or text_id or ""
 end
@@ -273,7 +273,7 @@ end
 
 ---Get random translation for text id, split by \n symbol
 ---@param text_id string text id from your localization
----@return string translated text
+---@return string text ("ui_hint") -> "Hint 1" or "Hint 2" or ...
 function M.txr(text_id)
 	local texts = lang_internal.split(LANG_DICT[text_id], "\n")
 	return texts[math.random(1, #texts)]
@@ -283,7 +283,7 @@ end
 ---Get translation for text id with params
 ---@param text_id string Text id from your localization
 ---@vararg string|number Params for translation
----@return string Translated text
+---@return string text ("ui_hello_name", "John") -> "Hello, John!"
 function M.txp(text_id, ...)
 	return string.format(M.txt(text_id), ...)
 end
@@ -291,26 +291,21 @@ end
 
 ---Check is translation with text_id exist
 ---@param text_id string text id from your localization
----@return boolean Is translation exist for text_id
+---@return boolean is_exist Is translation exist for text_id
 function M.is_exist(text_id)
 	return (not not LANG_DICT[text_id])
 end
 
 
 ---Return list of available languages
----@return string[] List of available languages
+---@return string[] langs List of available languages
 function M.get_langs()
-	local langs = {}
-	for _, lang_data in ipairs(M.available_langs) do
-		table.insert(langs, lang_data.id)
-	end
-
-	return langs
+	return LANGS_ORDER
 end
 
 
----Get lang table
----@return table<string, string>
+---Get current lang table { key = "value" }
+---@return table<string, string> lang_table
 function M.get_lang_table()
 	return LANG_DICT
 end
@@ -318,12 +313,13 @@ end
 
 ---Check if language is available
 ---@param lang_id string Language code to check
----@return boolean True if language is available
+---@return boolean is_available True if language is available
 function M.is_lang_available(lang_id)
 	return is_lang_available(lang_id)
 end
 
 
+---Render properties panel for lang module
 ---@param druid table druid instance
 ---@param properties_panel table druid properties panel instance
 function M.render_properties_panel(druid, properties_panel)

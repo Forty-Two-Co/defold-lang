@@ -1,283 +1,257 @@
-# API Reference
+# lang API
 
-## Table of Contents
-
-- [Lang](#lang)
-  - [lang.init()](#langinit)
-  - [lang.set_lang()](#langset_lang)
-  - [lang.get_lang()](#langget_lang)
-  - [lang.get_langs()](#langget_langs)
-  - [lang.set_next_lang()](#langset_next_lang)
-  - [lang.get_next_lang()](#langget_next_lang)
-  - [lang.is_exist()](#langis_exist)
-  - [lang.txt()](#langtxt)
-  - [lang.txp()](#langtxp)
-  - [lang.txr()](#langtxr)
-  - [lang.set_logger()](#langset_logger)
-  - [lang.reset_state()](#langreset_state)
-
-
-## Lang
-
-To start using the Lang module in your project, you first need to import it. This can be done with the following line of code:
-
-```lua
-local lang = require("lang.lang")
-```
+> at lang/lang.lua
 
 ## Functions
 
-**lang.init()**
+- [reset_state](#reset_state)
+- [init](#init)
+- [set_logger](#set_logger)
+- [set_lang](#set_lang)
+- [set_lang_table](#set_lang_table)
+- [set_next_lang](#set_next_lang)
+- [get_next_lang](#get_next_lang)
+- [get_lang](#get_lang)
+- [get_default_lang](#get_default_lang)
+- [txt](#txt)
+- [txr](#txr)
+- [txp](#txp)
+- [is_exist](#is_exist)
+- [get_langs](#get_langs)
+- [get_lang_table](#get_lang_table)
+- [is_lang_available](#is_lang_available)
+- [render_properties_panel](#render_properties_panel)
+
+## Fields
+
+- [state](#state)
+- [available_langs](#available_langs)
+
+
+
+### reset_state
+
 ---
 ```lua
-lang.init()
+lang.reset_state()
 ```
 
-This function initializes the lang module and loads the current or default language. It should be called at the beginning of the game.
+Reset module lang state
 
-- **Usage Example:**
+### init
 
-```lua
-lang.init()
-```
-
-**lang.set_lang()**
 ---
 ```lua
-lang.set_lang(lang_id)
+lang.init(available_langs, [lang_on_start])
 ```
 
-This function sets the current language.
+Initialize lang module
 
 - **Parameters:**
-  - `lang_id`: The language id to set.
+	- `available_langs` *(lang.data[])*: List of { id = "en", path = "/locales/en.json" }
+	- `[lang_on_start]` *(string?)*: Language code to set on start, override saved language
 
-- **Usage Example:**
+### set_logger
 
-```lua
-lang.set_lang("es")
-```
-
-
-**lang.get_lang()**
----
-```lua
-lang.get_lang()
-```
-
-This function returns the current language code.
-
-- **Return Value:**
-  - The current language code. Example: "en"
-
-- **Usage Example:**
-
-```lua
-local current_lang = lang.get_lang()
-print(current_lang) -- "en"
-```
-
-
-**lang.get_langs()**
----
-```lua
-lang.get_langs()
-```
-
-This function returns the available languages.
-
-- **Return Value:**
-  - A table of available languages.
-
-- **Usage Example:**
-
-```lua
-local langs = lang.get_langs()
-print(table.concat(langs, ", ")) -- "en, ru"
-```
-
-
-**lang.set_next_lang()**
----
-```lua
-lang.set_next_lang()
-```
-
-This function sets the next language in the list of available languages.
-
-- **Usage Example:**
-
-```lua
-lang.set_next_lang()
-```
-
-
-**lang.get_next_lang()**
----
-```lua
-lang.get_next_lang()
-```
-
-This function returns the next language code in the list of available languages from the current language.
-
-- **Return Value:**
-  - The next language code.
-
-- **Usage Example:**
-```lua
-local next_lang = lang.get_next_lang()
-print(next_lang) -- "es"
-lang.set_lang(next_lang)
-```
-
-
-**lang.is_exist()**
----
-```lua
-lang.is_exist(text_id)
-```
-
-This function checks if the text id exists in the current language file.
-
-- **Parameters:**
-  - `text_id`: The text id to check.
-
-- **Return Value:**
-  - `true` if the text id exists, `false` otherwise.
-
-- **Usage Example:**
-
-```lua
-print(lang.is_exist("ui_hello_world")) -- true
-print(lang.is_exist("ui_hello_world_2")) -- false
-```
-
-
-**lang.txt**
----
-```lua
-lang.txt(text_id)
-```
-
-This function returns the text for the specified text id.
-
-- **Parameters:**
-  - `text_id`: The locale id to get the text translation for.
-
-- **Return Value:**
-  - The text for the specified text id. If the string is not found, the function returns the `text_id` back.
-
-- **Usage Example:**
-
-```lua
-local text = lang.txt("ui_hello_world")
-print(text) -- "Hello, World!"
-
-local text = lang.txt("ui_hello_world_2")
-print(text) -- "ui_hello_world_2"
-```
-
-
-**lang.txp**
----
-```lua
-lang.txp(text_id, ...)
-```
-
-This function returns the text for the specified text id with the specified parameters.
-
-- **Parameters:**
-  - `text_id`: The text id to get the text translation for.
-  - `...`: The parameters to replace in the text.
-
-- **Return Value:**
-  - The text for the specified text id with the specified parameters. If the string is not found, the function returns the `text_id` back.
-
-- **Usage Example:**
-
-```lua
--- ui_hello_name = "Hello, %s!"
-local text = lang.txp("ui_hello_name", "Max")
-print(text) -- "Hello, Max!"
-```
-
-
-**lang.txr**
----
-```lua
-lang.txr(text_id)
-```
-
-This function returns the random text for the specified text id. The text split by the `\n` symbol (new line).
-
-- **Parameters:**
-  - `text_id`: The text id to get the text translation for.
-
-- **Return Value:**
-  - The random text for the specified text id.
-
-- **Usage Example:**
-
-```lua
-local data = {
-	ui_hello_world = "Hello, World!\nHello, Universe!"
-}
-
-local text = lang.txr("ui_hello_world")
-print(text) -- "Hello, World!"
-
-local text = lang.txr("ui_hello_world")
-print(text) -- "Hello, Universe!"
-```
-
-
-**lang.set_logger()**
 ---
 ```lua
 lang.set_logger([logger_instance])
 ```
 
+Set logger for lang module. Pass nil to use empty logger
+
 - **Parameters:**
-  - `logger_instance`: A logger object that follows the specified logging interface, including methods for `trace`, `debug`, `info`, `warn`, `error`. Pass `nil` to remove the default logger.
+	- `[logger_instance]` *(table|lang.logger|nil)*:
 
-- **Usage Example:**
+### set_lang
 
-Using the [Defold Log](https://github.com/Insality/defold-log) module:
-```lua
-local log = require("log.log")
-local lang = require("lang.lang")
-
-lang.set_logger(log.get_logger("lang"))
-```
-
-Creating a custom user logger:
-```lua
-local logger = {
-    trace = function(_, message, context) end,
-    debug = function(_, message, context) end,
-    info = function(_, message, context) end,
-    warn = function(_, message, context) end,
-    error = function(_, message, context) end
-}
-lang.set_logger(logger)
-```
-
-Remove the default logger:
-```lua
-lang.set_logger(nil)
-```
-
-
-**lang.reset_state()**
 ---
 ```lua
-lang.reset_state()
+lang.set_lang(lang_id)
 ```
 
-This function resets the lang module state.
+Set current language
 
-- **Usage Example:**
+- **Parameters:**
+	- `lang_id` *(string)*: current language code (en, jp, ru, etc.)
 
+- **Returns:**
+	- `is` *(boolean)*: language changed
+
+### set_lang_table
+
+---
 ```lua
-lang.reset_state()
+lang.set_lang_table([lang_table])
 ```
+
+- **Parameters:**
+	- `[lang_table]` *(any)*:
+
+### set_next_lang
+
+---
+```lua
+lang.set_next_lang()
+```
+
+Set next language from lang list and return it's code
+
+- **Returns:**
+	- `lang_code` *(string)*: The new language code after change
+
+### get_next_lang
+
+---
+```lua
+lang.get_next_lang()
+```
+
+Get next language from lang list and return it's code
+
+- **Returns:**
+	- `lang_code` *(string)*: next language code
+
+### get_lang
+
+---
+```lua
+lang.get_lang()
+```
+
+Get current language
+
+- **Returns:**
+	- `Current` *(string)*: language code
+
+### get_default_lang
+
+---
+```lua
+lang.get_default_lang()
+```
+
+Get default language
+
+- **Returns:**
+	- `Default` *(string)*: language code
+
+### txt
+
+---
+```lua
+lang.txt(text_id)
+```
+
+Get translation for text id
+
+- **Parameters:**
+	- `text_id` *(string)*: text id from your localization
+
+- **Returns:**
+	- `Translated` *(string)*: text
+
+### txr
+
+---
+```lua
+lang.txr(text_id)
+```
+
+Get random translation for text id, split by \n symbol
+
+- **Parameters:**
+	- `text_id` *(string)*: text id from your localization
+
+- **Returns:**
+	- `translated` *(string)*: text
+
+### txp
+
+---
+```lua
+lang.txp(text_id, ...)
+```
+
+Get translation for text id with params
+
+- **Parameters:**
+	- `text_id` *(string)*: Text id from your localization
+	- `...` *(...)*: vararg
+
+- **Returns:**
+	- `Translated` *(string)*: text
+
+### is_exist
+
+---
+```lua
+lang.is_exist(text_id)
+```
+
+Check is translation with text_id exist
+
+- **Parameters:**
+	- `text_id` *(string)*: text id from your localization
+
+- **Returns:**
+	- `Is` *(boolean)*: translation exist for text_id
+
+### get_langs
+
+---
+```lua
+lang.get_langs()
+```
+
+Return list of available languages
+
+- **Returns:**
+	- `List` *(string[])*: of available languages
+
+### get_lang_table
+
+---
+```lua
+lang.get_lang_table()
+```
+
+Get lang table
+
+- **Returns:**
+	- `` *(table<string, string>)*:
+
+### is_lang_available
+
+---
+```lua
+lang.is_lang_available(lang_id)
+```
+
+Check if language is available
+
+- **Parameters:**
+	- `lang_id` *(string)*: Language code to check
+
+- **Returns:**
+	- `True` *(boolean)*: if language is available
+
+### render_properties_panel
+
+---
+```lua
+lang.render_properties_panel(druid, properties_panel)
+```
+
+- **Parameters:**
+	- `druid` *(table)*: druid instance
+	- `properties_panel` *(table)*: druid properties panel instance
+
+
+## Fields
+<a name="state"></a>
+- **state** (_nil_):  Persistent storage
+
+<a name="available_langs"></a>
+- **available_langs** (_nil_): List of available languages
+
