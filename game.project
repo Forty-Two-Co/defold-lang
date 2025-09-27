@@ -13,7 +13,7 @@ input_method = HiddenInputField
 
 [project]
 title = Defold Lang
-version = 3
+version = 4
 publisher = Insality
 developer = Maksim Tuprikov, Insality
 custom_resources = /resources
@@ -21,9 +21,4 @@ dependencies#0 = https://github.com/britzl/deftest/archive/master.zip
 
 [library]
 include_dirs = lang
-
-[lang]
-path = /resources/lang
-langs = en,ru,es
-default = en
 

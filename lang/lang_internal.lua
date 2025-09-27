@@ -1,6 +1,16 @@
---- Common functions for lang module
+local csv = require("lang.csv")
+
+---@class lang.logger
+---@field trace fun(logger: lang.logger, message: string, data: any|nil)
+---@field debug fun(logger: lang.logger, message: string, data: any|nil)
+---@field info fun(logger: lang.logger, message: string, data: any|nil)
+---@field warn fun(logger: lang.logger, message: string, data: any|nil)
+---@field error fun(logger: lang.logger, message: string, data: any|nil)
+
 
 local M = {}
+
+M.SYSTEM_LANG = sys.get_sys_info().language
 
 
 ---Split string by separator
@@ -16,29 +26,6 @@ function M.split(s, sep)
 		i = i + 1
 	end
 	return t
-end
-
-
---- Path to locales
-M.LOCALES_PATH = sys.get_config_string("lang.path", nil)
-if string.sub(M.LOCALES_PATH, -1) ~= "/" then
-	M.LOCALES_PATH = M.LOCALES_PATH .. "/"
-end
-
---- List of available languages
-M.LANGS = M.split(sys.get_config_string("lang.langs"), ",")
-M.LANGS_MAP = {}
-for i = 1, #M.LANGS do
-	M.LANGS_MAP[M.LANGS[i]] = true
-end
-
---- Default language
-M.DEFAULT_LANG = sys.get_config_string("lang.default")
--- Use first 2 letters of device language (ISO 639-1)
-local device_lang = string.sub(sys.get_sys_info().device_language, 1, 2)
-if M.LANGS_MAP[device_lang] then
-	-- Override only if we have this language
-	M.DEFAULT_LANG = device_lang
 end
 
 
@@ -75,6 +62,49 @@ function M.load_json(json_path)
 	end
 
 	return json.decode(resource)
+end
+
+
+---Load CSV file from game resources folder (by relative path to game.project)
+---Return nil if file not found or error
+---@param csv_path string
+---@return table|nil
+function M.load_csv(csv_path)
+	local resource, is_error = sys.load_resource(csv_path)
+	if is_error or not resource then
+		return nil
+	end
+
+	local data = {}
+	local f = csv.openstring(resource)
+	local headers = nil
+
+	-- Parse headers, first id is a lang_id to table <lang<locale_id, translate>>
+	for fields in f:lines() do
+		if not headers then
+			-- First row contains language codes
+			headers = fields
+			-- Initialize language tables
+			for i = 2, #headers do
+				data[headers[i]] = {}
+			end
+		else
+			-- Process data rows
+			local key = fields[1] -- First column is the translation key
+			if key then
+				-- Add translations for each language
+				for i = 2, #headers do
+					if fields[i] then
+						-- Process escape sequences in the field value
+						local value = fields[i]:gsub("\\n", "\n"):gsub("\\t", "\t"):gsub("\\r", "\r")
+						data[headers[i]][key] = value
+					end
+				end
+			end
+		end
+	end
+
+	return data
 end
 
 

@@ -7,14 +7,14 @@
 [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/insality) [![Ko-Fi](https://img.shields.io/badge/Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/insality) [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/insality)
 
 
-# Lang
+# Defold Lang
 
-**Lang** - is a module for working with localization in **Defold**. It provides a way to load and use different languages files in your project.
+**Defold Lang** is a simple localization module for **Defold**. It loads language files and manages translations in your project.
 
 ## Features
 
 - **Handy API** - Simple and easy to use API
-- **Text Support** - Load and use different JSON languages files
+- **Multiple File Formats** - Support for JSON, Lua, and CSV language files
 - **Saver Support** - Save current selected language in [Defold-Saver](https://github.com/Insality/defold-saver)
 - **Druid Support** - Easy [Druid](https://github.com/Insality/druid) integration
 
@@ -24,10 +24,10 @@
 
 Open your `game.project` file and add the following line to the dependencies field under the project section:
 
-**[Lang](https://github.com/Insality/defold-lang/archive/refs/tags/3.zip)**
+**[Lang](https://github.com/Insality/defold-lang/archive/refs/tags/4.zip)**
 
 ```
-https://github.com/Insality/defold-lang/archive/refs/tags/3.zip
+https://github.com/Insality/defold-lang/archive/refs/tags/4.zip
 ```
 
 After that, select `Project ▸ Fetch Libraries` to update [library dependencies]((https://defold.com/manuals/libraries/#setting-up-library-dependencies)). This happens automatically whenever you open a project so you will only need to do this if the dependencies change without re-opening the project.
@@ -38,50 +38,127 @@ After that, select `Project ▸ Fetch Libraries` to update [library dependencies
 
 | Platform         | Library Size |
 | ---------------- | ------------ |
-| HTML5            | **1.80 KB**  |
-| Desktop / Mobile | **2.82 KB**  |
+| HTML5            | **7.87 KB**  |
+| Desktop / Mobile | **12.68 KB**  |
 
 
-### Configuration
+### Initialization
 
-You should configure the **Lang** module in the `game.project` file:
+Initialize the **Lang** module by calling `lang.init()` with your language configuration:
 
-```ini
-[lang]
-path = /resources/lang
-langs = en,ru,es
-default = en
+```lua
+local lang = require("lang.lang")
+
+-- Initialize with language files
+lang.init({
+	{ id = "en", path = "/resources/lang/en.json" },
+	{ id = "ru", path = "/resources/lang/ru.json" },
+	{ id = "es", path = "/resources/lang/es.json" },
+})
 ```
 
-This configuration section for `game.project` defines various settings:
+You can also force a specific language on initialization:
 
-- **path**: The path to the directory with language files. Default is `/resources/lang`. The module will search for language files in this directory by the language name.
-- **langs**: A list of available languages. Default is `en`.
-- **default**: The default language. Default is `en`.
-
-The module uses `sys.load_resource` to load the files. Place your files inside your [custom resources folder](https://defold.com/manuals/project-settings/#custom-resources) to ensure they are included in the build.
+```lua
+-- Force a specific language on start
+lang.init({
+	{ id = "en", path = "/resources/lang/en.json" },
+	{ id = "ru", path = "/resources/lang/ru.json" },
+	{ id = "es", path = "/resources/lang/es.json" },
+}, "es") -- Force Spanish language
+```
 
 
 ### Default Language
 
-The default language in settings is used as a fallback. By default, **Defold Lang** tries to load the user device language, acquired by `sys.get_sys_info().device_language`. If the language is not found in the available languages, the default language is used. Defold uses the two-character [ISO-639 format](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for language codes ("en", "ru", "es", etc).
+**Defold Lang** selects the language to use in the following priority order:
+
+1. **Force parameter** - If provided as second parameter to `lang.init()`
+2. **Saved language** - From `lang.state.lang` (restored from save system or manually set)
+3. **System language** - Device language from `sys.get_sys_info().language`
+4. **Default language** - First language in the configuration array
+
+The first language in the configuration array serves as the ultimate fallback. Defold uses the two-character [ISO-639 format](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for language codes ("en", "ru", "es", etc).
+
+The module uses `sys.load_resource` to load the files. Place your files inside your [custom resources folder](https://defold.com/manuals/project-settings/#custom-resources) to ensure they are included in the build.
 
 
 ### Localization Files
 
-Create a directory with language files in the `path` directory. The module will search for language files in this directory by the language name.
+**Defold Lang** supports three file formats: **JSON**, **Lua**, and **CSV**. Each format has its own advantages:
 
-The lang file - is a JSON file with the simple key-value structure. The key is the language id, and the value is the text for this language id.
+#### JSON Files
+JSON files use a simple key-value structure:
 
-Example of the lang file:
-
-```js
+```json
 {
 	"ui_hello_world": "Hello, World!",
-	"ui_hello_name", "Hello, %s!"
+	"ui_hello_name": "Hello, %s!",
 	"ui_settings": "Settings",
 	"ui_exit": "Exit"
 }
+```
+
+Initialize with JSON files:
+```lua
+lang.init({
+	{ id = "en", path = "/locales/en.json" },
+	{ id = "ru", path = "/locales/ru.json" },
+	{ id = "es", path = "/locales/es.json" },
+})
+```
+
+#### Lua Files
+Lua files return a table with translations:
+
+```lua
+-- en.lua
+return {
+	ui_hello_world = "Hello, World!",
+	ui_hello_name = "Hello, %s!",
+	ui_settings = "Settings",
+	ui_exit = "Exit"
+}
+```
+
+Initialize with Lua files:
+```lua
+lang.init({
+	{ id = "en", path = require("locales.en") },
+	{ id = "ru", path = require("locales.ru") },
+	{ id = "es", path = require("locales.es") },
+})
+```
+
+#### CSV Files
+CSV files allow multiple languages in a single file. The first column contains keys, and subsequent columns contain translations:
+
+```csv
+key,en,ru,es
+ui_hello_world,"Hello, World!","Привет, мир!","¡Hola, mundo!"
+ui_hello_name,"Hello, %s!","Привет, %s!","¡Hola, %s!"
+ui_settings,Settings,Настройки,Configuración
+ui_exit,Exit,Выход,Salir
+```
+
+Initialize with CSV files (specify column names as language IDs):
+```lua
+lang.init({
+	{ id = "en", path = "/locales/translations.csv" },
+	{ id = "ru", path = "/locales/translations.csv" },
+	{ id = "es", path = "/locales/translations.csv" },
+})
+```
+
+#### Mixed Format Example
+You can even mix different file formats:
+
+```lua
+lang.init({
+	{ id = "en", path = "/resources/lang/en.json" },
+	{ id = "ru", path = "/resources/lang/ru.lua" },
+	{ id = "es", path = "/resources/lang/translations.csv" },
+})
 ```
 
 
@@ -90,7 +167,7 @@ Example of the lang file:
 ### Quick API Reference
 
 ```lua
-lang.init()
+lang.init(available_langs, [lang_on_start])
 lang.set_lang(lang_id)
 lang.get_lang()
 lang.get_langs()
@@ -102,6 +179,27 @@ lang.txr(text_id)
 lang.is_exist(text_id)
 lang.set_logger([logger])
 lang.reset_state()
+```
+
+#### Basic Usage Example
+
+```lua
+local lang = require("lang.lang")
+
+-- Initialize with language files
+lang.init({
+	{ id = "en", path = "/resources/lang/en.json" },
+	{ id = "ru", path = "/resources/lang/ru.json" },
+	{ id = "es", path = "/resources/lang/es.json" },
+})
+
+-- Use translations
+print(lang.txt("ui_hello_world"))     -- "Hello, World!"
+print(lang.txp("ui_hello_name", "John")) -- "Hello, John!"
+
+-- Change language
+lang.set_lang("es")
+print(lang.txt("ui_hello_world"))     -- "¡Hola, mundo!"
 ```
 
 ### API Reference
@@ -148,6 +246,13 @@ For any issues, questions, or suggestions, please [create an issue](https://gith
 ### **V3**
 	- Add `lang.get_next_lang()` function
 	- Better error messages
+
+### **V4**
+	- [Breaking] Lang now use `lang.init()` function to initialize module instead of `game.project` configuration
+	- Add Lua file support
+	- Add CSV file support
+	- Updated editor script to collect unique characters from selected JSON and CSV files
+	- Add Lang debug properties page for Druid properties panel
 
 </details>
 
