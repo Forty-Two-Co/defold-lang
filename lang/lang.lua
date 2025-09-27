@@ -78,7 +78,7 @@ function M.init(available_langs, lang_on_start)
 
 	-- Build available languages list and map
 	for index, lang_data in ipairs(available_langs) do
-		table.insert(LANGS_ORDER, lang_data)
+		table.insert(LANGS_ORDER, lang_data.id)
 		AVAILABLE_LANGS_MAP[lang_data.id] = lang_data
 		default_lang = default_lang or lang_data.id
 	end
