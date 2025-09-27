@@ -33,25 +33,53 @@ M.state = nil
 ---@type lang.data[] In order
 M.available_langs = nil
 
+---Map of available languages for fast lookup
+---@type table<string, lang.data> Key is language id, value is lang.data
+local AVAILABLE_LANGS_MAP = nil
+
 ---Reset module lang state
 function M.reset_state()
 	M.state = {
 		lang = lang_internal.DEFAULT_LANG,
 	}
 	M.available_langs = {}
+	AVAILABLE_LANGS_MAP = {}
 	LANG_DICT = {}
 end
 M.reset_state()
+
+
+---Check if language exists in available languages
+---@param lang_id string Language code to check
+---@return boolean True if language exists
+local function is_lang_available(lang_id)
+	return AVAILABLE_LANGS_MAP[lang_id] ~= nil
+end
+
+
+---Get language data by id
+---@param lang_id string Language code
+---@return lang.data|nil Language data or nil if not found
+local function get_lang_data(lang_id)
+	return AVAILABLE_LANGS_MAP[lang_id]
+end
 
 
 ---Initialize lang module
 ---@param available_langs lang.data[] List of available languages
 ---@param lang_on_start string? Language code to set on start, override saved language
 function M.init(available_langs, lang_on_start)
-	local default_lang = available_langs and available_langs[1].id
+	if not available_langs or #available_langs == 0 then
+		lang_internal.logger:error("No available languages provided to init")
+		return
+	end
 
+	local default_lang = available_langs[1].id
+
+	-- Build available languages list and map
 	for index, lang_data in ipairs(available_langs) do
 		table.insert(M.available_langs, lang_data)
+		AVAILABLE_LANGS_MAP[lang_data.id] = lang_data
 		default_lang = default_lang or lang_data.id
 	end
 
@@ -62,17 +90,26 @@ function M.init(available_langs, lang_on_start)
 		lang_internal.logger:info("System language", sys_info.language)
 
 		if sys_info and sys_info.language then
-			-- Check if system language exists in available languages
-			for _, lang_data in ipairs(M.available_langs) do
-				if lang_data.id == sys_info.language then
-					system_lang = sys_info.language
-					break
-				end
+			-- Check if system language exists in available languages using fast lookup
+			if is_lang_available(sys_info.language) then
+				system_lang = sys_info.language
 			end
 		end
 	end
 
-	M.set_lang(lang_on_start or M.state.lang or system_lang or default_lang)
+	-- Determine target language with validation
+	local target_lang = lang_on_start or M.state.lang or system_lang or default_lang
+
+	-- Validate the target language exists, fallback to default if not
+	if not is_lang_available(target_lang) then
+		lang_internal.logger:warn("Target language not available, falling back to default", {
+			target_lang = target_lang,
+			default_lang = default_lang
+		})
+		target_lang = default_lang
+	end
+
+	M.set_lang(target_lang)
 end
 
 
@@ -87,29 +124,42 @@ end
 ---@param lang_id string current language code (en, jp, ru, etc.)
 ---@return boolean is language changed
 function M.set_lang(lang_id)
+	if not lang_id then
+		lang_internal.logger:error("Language id cannot be nil")
+		return false
+	end
+
 	local previous_lang = M.state.lang
 	local previous_loaded_lang = previous_lang or nil
 
-	-- Find language data
-	local lang_data = lang_internal.find(M.available_langs, "id", lang_id)
-	if not lang_data then
+	-- Check if language is available using fast lookup
+	if not is_lang_available(lang_id) then
 		lang_internal.logger:error("Lang not found", lang_id)
 		return false
 	end
 
+	-- Get language data using fast lookup
+	local lang_data = get_lang_data(lang_id)
+	if not lang_data then
+		lang_internal.logger:error("Lang data not found", lang_id)
+		return false
+	end
+
 	local is_lua = type(lang_data.path) == "table"
-	local is_csv = not is_lua and string.find(lang_data.path, ".csv")
-	local is_json = not is_lua and string.find(lang_data.path, ".json")
+	---@type string|nil
+	local path_str = type(lang_data.path) == "string" and lang_data.path --[[@as string]] or nil
+	local is_csv = not is_lua and path_str and string.find(path_str, ".csv")
+	local is_json = not is_lua and path_str and string.find(path_str, ".json")
 
 	if is_lua then
 		M.set_lang_table(lang_data.path)
 		M.state.lang = lang_id
-	elseif is_csv then
-		M.load_from_csv(lang_data.path, lang_id)
-	elseif is_json then
-		M.load_from_json(lang_data.path, lang_id)
+	elseif is_csv and path_str then
+		M.load_from_csv(path_str, lang_id)
+	elseif is_json and path_str then
+		M.load_from_json(path_str, lang_id)
 	else
-		lang_internal.logger:error("Lang format not supported", lang_data.path)
+		lang_internal.logger:error("Lang format not supported", lang_data.path or "unknown")
 		return false
 	end
 
@@ -263,6 +313,14 @@ end
 ---@return table<string, string>
 function M.get_lang_table()
 	return LANG_DICT
+end
+
+
+---Check if language is available
+---@param lang_id string Language code to check
+---@return boolean True if language is available
+function M.is_lang_available(lang_id)
+	return is_lang_available(lang_id)
 end
 
 

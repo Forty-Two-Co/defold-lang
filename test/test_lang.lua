@@ -114,5 +114,15 @@ return function()
 			is_exists = lang.is_exist("ui_hello_not_found")
 			assert(not is_exists)
 		end)
+
+		it("Should not change language if not found", function()
+			lang.init({
+				{ id = "en", path = "/resources/lang/en.json" },
+			}, "fr")
+
+			local text = lang.txt("ui_hello")
+			assert_equal(text, "Hello, World!")
+			assert_equal(lang.state.lang, "en")
+		end)
 	end)
 end
