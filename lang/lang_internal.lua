@@ -1,8 +1,5 @@
 local csv = require("lang.csv")
 
----@class lang.state
----@field lang string @current language name (en, jp, ru, etc.)
-
 ---@class lang.logger
 ---@field trace fun(logger: lang.logger, message: string, data: any|nil)
 ---@field debug fun(logger: lang.logger, message: string, data: any|nil)
@@ -12,6 +9,8 @@ local csv = require("lang.csv")
 
 
 local M = {}
+
+M.SYSTEM_LANG = sys.get_sys_info().language
 
 
 ---Split string by separator
@@ -122,54 +121,5 @@ function M.index_of(t, value)
 	return nil
 end
 
-
----Decode CSV data
----@param csv_data string
----@return table
-function M.csv_decode(csv_data)
-	local result = {}
-	local lines = {}
-
-	-- Split into lines
-	for line in csv_data:gmatch("([^\r\n]+)") do
-		table.insert(lines, line)
-	end
-
-	if #lines == 0 then
-		return result
-	end
-
-	-- Parse headers (first row)
-	local headers = {}
-	for header in lines[1]:gmatch("([^,]+)") do
-		header = header:gsub("^%s*(.-)%s*$", "%1") -- Trim whitespace
-		table.insert(headers, header)
-		result[header] = {} -- Initialize language map
-	end
-
-	-- Process each data row
-	for i = 2, #lines do
-		local line = lines[i]
-		local col_index = 1
-		local key = nil
-
-		-- Parse each field
-		for field in line:gmatch("([^,]+)") do
-			field = field:gsub("^%s*(.-)%s*$", "%1") -- Trim whitespace
-
-			if col_index == 1 then
-				-- First column is the translation key
-				key = field
-			elseif key and col_index <= #headers then
-				-- Add translation to language map
-				result[headers[col_index]][key] = field
-			end
-
-			col_index = col_index + 1
-		end
-	end
-
-	return result
-end
 
 return M

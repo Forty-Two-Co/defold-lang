@@ -17,6 +17,9 @@ local lang_debug_page = require("lang.lang_debug_page")
 local M = {}
 
 
+---@class lang.state
+---@field lang string current language name (en, jp, ru, etc.)
+
 ---@class lang.data
 ---@field path string|table Lua table, json or csv path, ex: "/resources/lang/en.json", "/resources/lang/en.csv"
 ---@field id string Language code, ex: "en". If csv file, it's a header name
@@ -40,7 +43,7 @@ local AVAILABLE_LANGS_MAP = nil
 ---Reset module lang state
 function M.reset_state()
 	M.state = {
-		lang = lang_internal.DEFAULT_LANG,
+		lang = lang_internal.SYSTEM_LANG,
 	}
 	LANG_DICT = {}
 	LANGS_ORDER = {}
@@ -79,9 +82,8 @@ function M.init(available_langs, lang_on_start)
 	AVAILABLE_LANGS_MAP = {}
 	LANG_DICT = {}
 
-	local default_lang = available_langs[1].id
-
 	-- Build available languages list and map
+	local default_lang = nil
 	for index, lang_data in ipairs(available_langs) do
 		table.insert(LANGS_ORDER, lang_data.id)
 		AVAILABLE_LANGS_MAP[lang_data.id] = lang_data
@@ -89,17 +91,9 @@ function M.init(available_langs, lang_on_start)
 	end
 
 	-- Get system language if no specific language is requested
-	local system_lang = nil
-	if not lang_on_start and not M.state.lang then
-		local sys_info = sys.get_sys_info()
-		lang_internal.logger:info("System language", sys_info.language)
-
-		if sys_info and sys_info.language then
-			-- Check if system language exists in available languages using fast lookup
-			if is_lang_available(sys_info.language) then
-				system_lang = sys_info.language
-			end
-		end
+	local system_lang = lang_internal.SYSTEM_LANG
+	if not is_lang_available(system_lang) then
+		system_lang = nil
 	end
 
 	-- Determine target language with validation
@@ -179,7 +173,7 @@ end
 ---@param locale_id string? locale id
 ---@return table<string, string>? result lang data or false if error
 function M.load_from_json(lang_path, locale_id)
-	locale_id = locale_id or M.state.lang or lang_internal.DEFAULT_LANG
+	locale_id = locale_id or M.state.lang or lang_internal.SYSTEM_LANG
 
 	local is_parsed, lang_data = pcall(lang_internal.load_json, lang_path)
 	if not is_parsed then
@@ -204,7 +198,7 @@ end
 ---@param locale_id string? lang code, default is last used lang
 ---@return table<string, string>? result lang data or false if error
 function M.load_from_csv(csv_path, locale_id)
-	locale_id = locale_id or M.state.lang or lang_internal.DEFAULT_LANG
+	locale_id = locale_id or M.state.lang or lang_internal.SYSTEM_LANG
 
 	local langs_data = lang_internal.load_csv(csv_path)
 	if not langs_data then
@@ -264,7 +258,7 @@ end
 ---Get default language
 ---@return string Default language code
 function M.get_default_lang()
-	return lang_internal.DEFAULT_LANG
+	return lang_internal.SYSTEM_LANG
 end
 
 
