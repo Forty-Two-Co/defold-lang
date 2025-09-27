@@ -149,6 +149,13 @@ For any issues, questions, or suggestions, please [create an issue](https://gith
 	- Add `lang.get_next_lang()` function
 	- Better error messages
 
+### **V4**
+	- [Breaking] Lang now use `lang.init()` function to initialize module instead of `game.project` configuration
+	- Add Lua file support
+	- Add CSV file support
+	- Updated editor script to collect unique characters from selected JSON and CSV files
+	- Add Lang debug properties page for Druid properties panel
+
 </details>
 
 

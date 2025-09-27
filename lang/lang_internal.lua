@@ -1,5 +1,15 @@
---- Common functions for lang module
 local csv = require("lang.csv")
+
+---@class lang.state
+---@field lang string @current language name (en, jp, ru, etc.)
+
+---@class lang.logger
+---@field trace fun(logger: lang.logger, message: string, data: any|nil)
+---@field debug fun(logger: lang.logger, message: string, data: any|nil)
+---@field info fun(logger: lang.logger, message: string, data: any|nil)
+---@field warn fun(logger: lang.logger, message: string, data: any|nil)
+---@field error fun(logger: lang.logger, message: string, data: any|nil)
+
 
 local M = {}
 
@@ -18,29 +28,6 @@ function M.split(s, sep)
 	end
 	return t
 end
-
-
------ Path to locales
---M.LOCALES_PATH = sys.get_config_string("lang.path", nil)
---if string.sub(M.LOCALES_PATH, -1) ~= "/" then
---	M.LOCALES_PATH = M.LOCALES_PATH .. "/"
---end
-
------ List of available languages
---M.LANGS = M.split(sys.get_config_string("lang.langs"), ",")
---M.LANGS_MAP = {}
---for i = 1, #M.LANGS do
---	M.LANGS_MAP[M.LANGS[i]] = true
---end
-
------ Default language
---M.DEFAULT_LANG = sys.get_config_string("lang.default")
----- Use first 2 letters of device language (ISO 639-1)
---local device_lang = string.sub(sys.get_sys_info().device_language, 1, 2)
---if M.LANGS_MAP[device_lang] then
---	-- Override only if we have this language
---	M.DEFAULT_LANG = device_lang
---end
 
 
 --- Use empty function to save a bit of memory
@@ -63,22 +50,6 @@ M.logger = {
 	warn = function(_, msg, data) print("WARN:", msg, data) end,
 	error = function(_, msg, data) print("ERROR:", msg, data) end
 }
-
-
----Find item in list by key and value
----@param list table
----@param key string
----@param value any
----@return table|nil
-function M.find(list, key, value)
-	for _, item in ipairs(list) do
-		if item[key] == value then
-			return item
-		end
-	end
-
-	return nil
-end
 
 
 ---Load JSON file from game resources folder (by relative path to game.project)

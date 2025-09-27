@@ -2,8 +2,8 @@ local M = {}
 
 
 ---@param lang lang
----@param druid druid.instance
----@param properties_panel druid.widget.properties_panel
+---@param druid table druid instance
+---@param properties_panel table druid properties panel instance
 function M.render_properties_panel(lang, druid, properties_panel)
 	properties_panel:next_scene()
 	properties_panel:set_header("Lang Panel")
