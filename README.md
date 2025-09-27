@@ -38,8 +38,8 @@ After that, select `Project ▸ Fetch Libraries` to update [library dependencies
 
 | Platform         | Library Size |
 | ---------------- | ------------ |
-| HTML5            | **1.80 KB**  |
-| Desktop / Mobile | **2.82 KB**  |
+| HTML5            | **7.87 KB**  |
+| Desktop / Mobile | **12.68 KB**  |
 
 
 ### Initialization
@@ -67,7 +67,6 @@ lang.init({
 	{ id = "es", path = "/resources/lang/es.json" },
 }, "es") -- Force Spanish language
 ```
-
 
 
 ### Default Language
